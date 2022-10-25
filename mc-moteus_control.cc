@@ -579,6 +579,7 @@ double calculateExpo(double Jval, double ExpoVal,double min,double max) {
             ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, -100, 100);
 	    double intJv = calculateExpo ( ActualJoyValue,args.joy_expo,fabs(extJSpeed)*-1,fabs(extJSpeed));
 	    ActualJoyValue = ((LastJVal *(args.joy_damp-1))+intJv)/args.joy_damp;
+	    LastJVal =ActualJoyValue;
 	    //double calculateExpo(double Jval, double ExpoVal,double min,double max) {
             //ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, fabs(extJSpeed)*-1 , fabs(extJSpeed));//
 	    //expo and input easing
