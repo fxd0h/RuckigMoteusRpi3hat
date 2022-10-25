@@ -89,6 +89,10 @@ namespace
         {
           secondary_bus = std::stoull(args.at(++i));
         }
+        else if (arg == "--joy-speed")
+        {
+          joy_speed = std::stod(args.at(++i));
+        }
         else
         {
           throw std::runtime_error("Unknown argument: " + arg);
@@ -104,6 +108,7 @@ namespace
     int primary_bus = 3;
     int secondary_id = 2;
     int secondary_bus = 2;
+    double joy_speed = 1;
   };
 
   void DisplayUsage()
@@ -118,6 +123,7 @@ namespace
     std::cout << "  --primary-bus BUS    bus of primary servo\n";
     std::cout << "  --secondary-id ID    servo ID of secondary, driven servo\n";
     std::cout << "  --secondary-bus BUS  bus of secondary servo\n";
+    std::cout << "  --joy-speed SPD      joystick absolute maximun speed\n";
   }
 
   void LockMemory()
@@ -353,7 +359,7 @@ namespace
     bool sDecreaseAccel = false;
     bool sIncreaseJerk = false;
     bool sDecreaseJerk = false;
-
+    double  extJSpeed = args.joy_speed;
     Joystick joystick("/dev/input/js0");
     JoystickEvent Jevent;
 
@@ -538,7 +544,8 @@ namespace
           if (Jevent.number == 0)
           {
             ActualJoyValueRaw = Jevent.value;
-            ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, -2, +2);
+            //ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, -0.02, +0.02);//
+            ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, fabs(extJSpeed)*-1 , fabs(extJSpeed));//
             if (ActualJoyValueRaw == 0)
             {
               ActualJoyValue = 0.0f;
@@ -556,11 +563,11 @@ namespace
 
         if (ActualJoyValue > 0)
         {
-          Rinput.target_position = {100};
+          Rinput.target_position = {10};
         }
         else
         {
-          Rinput.target_position = {-100};
+          Rinput.target_position = {-10};
         }
 
         if (ActualJoyValue == 0)

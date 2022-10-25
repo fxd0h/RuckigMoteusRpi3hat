@@ -13,10 +13,6 @@ from pathlib import Path
 from sys import path
 
 
-build_path = "/home/fx/ruckig/ruckig/build"
-path.insert(0, str(build_path))
- 
-from ruckig import InputParameter, OutputParameter, Result, Ruckig, ControlInterface
  
 
 
@@ -89,8 +85,8 @@ async def main():
         commands = [
             servos[1].make_position(
                 position=math.nan,
-                #velocity=0.1*math.sin(now),
-                velocity= speed*2,
+                velocity=0.1*math.sin(now),
+                #velocity= speed*2,
                 query=True),
         ]
 
