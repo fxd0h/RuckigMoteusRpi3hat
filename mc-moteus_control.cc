@@ -44,6 +44,8 @@
 
 #include <ruckig/ruckig.hpp>
 
+
+
 using namespace mjbots;
 
 using MoteusInterface = moteus::Pi3HatMoteusInterface;
@@ -93,6 +95,14 @@ namespace
         {
           joy_speed = std::stod(args.at(++i));
         }
+        else if (arg == "--joy-expo")
+        {
+          joy_expo = std::stod(args.at(++i));
+        }
+        else if (arg == "--joy-damp")
+        {
+          joy_damp = std::stod(args.at(++i));
+        }
         else
         {
           throw std::runtime_error("Unknown argument: " + arg);
@@ -109,6 +119,8 @@ namespace
     int secondary_id = 2;
     int secondary_bus = 2;
     double joy_speed = 1;
+    double joy_expo = 1;
+    double joy_damp = 2;
   };
 
   void DisplayUsage()
@@ -124,6 +136,7 @@ namespace
     std::cout << "  --secondary-id ID    servo ID of secondary, driven servo\n";
     std::cout << "  --secondary-bus BUS  bus of secondary servo\n";
     std::cout << "  --joy-speed SPD      joystick absolute maximun speed\n";
+    std::cout << "  --joy-expo EXP      joystick expo value [0..100]\n";
   }
 
   void LockMemory()
@@ -294,11 +307,28 @@ namespace
     double primary_initial_ = std::numeric_limits<double>::quiet_NaN();
     double secondary_initial_ = std::numeric_limits<double>::quiet_NaN();
   };
-
+  
   double Fxscale(double valueIn, double baseMin, double baseMax, double limitMin, double limitMax)
   {
     return ((limitMax - limitMin) * (valueIn - baseMin) / (baseMax - baseMin)) + limitMin;
   }
+/* expo
+ * 
+*/
+
+double calculateExpo(double Jval, double ExpoVal,double min,double max) {
+  if (ExpoVal == 0) {
+    ExpoVal = 1;
+  }
+  double JoyHomo = Jval / 100;
+  double expoedValue = (JoyHomo * JoyHomo * JoyHomo * (ExpoVal - 1) + JoyHomo) / ExpoVal;
+  if (expoedValue > 1) expoedValue = 1;
+  if (expoedValue < -1) expoedValue = -1;
+  double retVal = Fxscale(expoedValue, -1, 1, min, max);
+  return retVal;
+}
+
+
   template <typename Controller>
   void Run(const Arguments &args, Controller *controller)
   {
@@ -354,7 +384,7 @@ namespace
     float ReqJerk = 10.0f;
     float AccelSteps = 0.01;
     float JerkSteps = 0.01;
-
+    double LastJVal= 0.0f;
     bool sIncreaseAccel = false;
     bool sDecreaseAccel = false;
     bool sIncreaseJerk = false;
@@ -545,7 +575,24 @@ namespace
           {
             ActualJoyValueRaw = Jevent.value;
             //ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, -0.02, +0.02);//
-            ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, fabs(extJSpeed)*-1 , fabs(extJSpeed));//
+
+            ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, -100, 100);
+	    double intJv = calculateExpo ( ActualJoyValue,args.joy_expo,fabs(extJSpeed)*-1,fabs(extJSpeed));
+	    ActualJoyValue = ((LastJVal *(args.joy_damp-1))+intJv)/args.joy_damp;
+	    //double calculateExpo(double Jval, double ExpoVal,double min,double max) {
+            //ActualJoyValue = Fxscale(ActualJoyValueRaw, -32768, 32767, fabs(extJSpeed)*-1 , fabs(extJSpeed));//
+	    //expo and input easing
+	    //
+	    //
+	    //
+	    //
+	    //
+	    //
+            
+	    
+
+
+
             if (ActualJoyValueRaw == 0)
             {
               ActualJoyValue = 0.0f;
